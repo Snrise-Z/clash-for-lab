@@ -95,7 +95,7 @@ _verify_actual_ports() {
     
     # 从配置文件获取期望端口进行比较
     local config_proxy_port=$("$BIN_YQ" '.mixed-port // 7890' "$MIHOMO_CONFIG_RUNTIME" 2>/dev/null)
-    local config_ui_addr=$("$BIN_YQ" '.external-controller // "127.0.0.1:9090"' "$MIHOMO_CONFIG_RUNTIME" 2>/dev/null)
+    local config_ui_addr=$("$BIN_YQ" '.external-controller // "127.0.0.1:6008"' "$MIHOMO_CONFIG_RUNTIME" 2>/dev/null)
     local config_ui_port=${config_ui_addr##*:}
     local config_dns_addr=$("$BIN_YQ" '.dns.listen // "0.0.0.0:15353"' "$MIHOMO_CONFIG_RUNTIME" 2>/dev/null)
     local config_dns_port=${config_dns_addr##*:}
@@ -398,7 +398,7 @@ function clashtui() {
     _get_ui_port
 
     # 检查端口可用性
-    if ! _is_bind "$UI_PORT" 2>/dev/null; then
+    if ! _is_bind "$UI_PORT" >/dev/null 2>&1; then
         _failcat "API 端口 ${UI_PORT} 未监听，请执行 clash status 检查"
         return 1
     fi

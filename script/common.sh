@@ -287,7 +287,7 @@ function _get_ui_port() {
         UI_PORT=$(grep "^UI_PORT=" "$MIHOMO_PORT_STATE" 2>/dev/null | cut -d'=' -f2)
     fi
     # 如果状态文件不存在或读取失败，使用默认值
-    UI_PORT=${UI_PORT:-9090}
+    UI_PORT=${UI_PORT:-6008}
 }
 
 function _get_dns_port() {
@@ -358,7 +358,21 @@ function _error_quit() {
 
 _is_bind() {
     local port=$1
-    { ss -lnptu || netstat -lnptu; } 2>/dev/null | grep ":${port}\b"
+
+    if command -v ss >/dev/null 2>&1; then
+        ss -lnptu 2>/dev/null | grep ":${port}\b" && return 0
+    fi
+
+    if command -v netstat >/dev/null 2>&1; then
+        netstat -lnptu 2>/dev/null | grep ":${port}\b" && return 0
+    fi
+
+    if command -v lsof >/dev/null 2>&1; then
+        lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | grep ":${port} " && return 0
+        lsof -nP -iUDP:"$port" 2>/dev/null | grep ":${port} " && return 0
+    fi
+
+    return 1
 }
 
 _is_already_in_use() {
@@ -477,7 +491,7 @@ _download_clash() {
 _download_raw_config() {
     local dest=$1
     local url=$2
-    local agent='clash-verge/v2.0.4'
+    local agent='Clash.Meta/v1.19.27'
     local tmp
     tmp=$(mktemp 2>/dev/null) || tmp="${dest}.tmp.$$"
 
@@ -848,12 +862,12 @@ _resolve_port_conflicts() {
     local ext_addr=$("$BIN_YQ" '.external-controller // ""' "$config_file" 2>/dev/null)
     if [ -n "$ext_addr" ]; then
         local ext_port=${ext_addr##*:}
-        UI_PORT=${ext_port:-9090}
+        UI_PORT=${ext_port:-6008}
         # Preserve the original bind address format
         local bind_addr=${ext_addr%:*}
         [ "$bind_addr" = "$ext_addr" ] && bind_addr="127.0.0.1"  # fallback if no colon found
     else
-        UI_PORT=9090
+        UI_PORT=6008
         bind_addr="127.0.0.1"
     fi
     

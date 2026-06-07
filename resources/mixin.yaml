@@ -7,7 +7,7 @@ system-proxy:
 mode: rule
 
 # Web 控制台配置
-external-controller: "0.0.0.0:9090"
+external-controller: "127.0.0.1:6008"
 external-ui: ui
 secret:
 
